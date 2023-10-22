@@ -1,39 +1,46 @@
 # Code refactored from https://docs.streamlit.io/knowledge-base/tutorials/build-conversational-apps
 
-import openai
+from langchain.llms import Ollama
+
+llm =  Ollama(model="mistral:latest")
+
+
 import streamlit as st
 
-with st.sidebar:
-    st.title('🤖💬 OpenAI Chatbot')
-    if 'OPENAI_API_KEY' in st.secrets:
-        st.success('API key already provided!', icon='✅')
-        openai.api_key = st.secrets['OPENAI_API_KEY']
-    else:
-        openai.api_key = st.text_input('Enter OpenAI API token:', type='password')
-        if not (openai.api_key.startswith('sk-') and len(openai.api_key)==51):
-            st.warning('Please enter your credentials!', icon='⚠️')
-        else:
-            st.success('Proceed to entering your prompt message!', icon='👉')
+# Set the page title
+st.title("Mistral Bot")
 
+# Create a sidebar that says OpenAI Chatbot
+with st.sidebar:
+    st.write("## 🤖💬 OpenAI Chatbot")
+    
+# Initialize Chat History
 if "messages" not in st.session_state:
     st.session_state.messages = []
 
+
+# Display Chat Messages from History 
 for message in st.session_state.messages:
     with st.chat_message(message["role"]):
         st.markdown(message["content"])
 
-if prompt := st.chat_input("What is up?"):
-    st.session_state.messages.append({"role": "user", "content": prompt})
+
+# check if there is a prompt and it is not none
+if prompt := st.chat_input("How can I help?"):
+    #Display user message in chat message container
     with st.chat_message("user"):
         st.markdown(prompt)
+    #Add user message to chat history
+    st.session_state.messages.append({"role": "user", "content": prompt})
+
+
+
+    response = llm(prompt)
+
+    # Display assistant response in chat message container
     with st.chat_message("assistant"):
-        message_placeholder = st.empty()
-        full_response = ""
-        for response in openai.ChatCompletion.create(
-            model="gpt-3.5-turbo",
-            messages=[{"role": m["role"], "content": m["content"]}
-                      for m in st.session_state.messages], stream=True):
-            full_response += response.choices[0].delta.get("content", "")
-            message_placeholder.markdown(full_response + "▌")
-        message_placeholder.markdown(full_response)
-    st.session_state.messages.append({"role": "assistant", "content": full_response})
+        st.markdown(response)
+    # Add assistant response to chat history 
+    st.session_state.messages.append({"role": "assistant", "content": response})
+
+
