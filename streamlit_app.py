@@ -1,57 +1,63 @@
-# Code refactored from https://docs.streamlit.io/knowledge-base/tutorials/build-conversational-apps
-
-from langchain.chat_models import ChatOllama
-from langchain.schema import HumanMessage
-
-
-chat_model =  ChatOllama(model="mistral:latest")
-
+from langchain.chains import LLMChain
+from langchain.llms import Ollama
+from langchain.memory import ConversationBufferMemory
+from langchain.memory.chat_message_histories import StreamlitChatMessageHistory
+from langchain.prompts import PromptTemplate
 import streamlit as st
 
-# Set the page title
-st.title("Mistral Bot")
+st.set_page_config(page_title="Mistral Chat", page_icon="📖")
+st.title("📖 Mistral Chat")
 
-# Create a sidebar that says OpenAI Chatbot
-with st.sidebar:
-    st.write("## 🤖💬 OpenAI Chatbot")
-    
-# Initialize Chat History
-if "messages" not in st.session_state:
-    st.session_state.messages = []
+# Set up memory
+msgs = StreamlitChatMessageHistory(key="langchain_messages")
+memory = ConversationBufferMemory(chat_memory=msgs)
+if len(msgs.messages) == 0:
+    msgs.add_ai_message("How can I help you?")
 
+view_messages = st.expander("View the message contents in session state")
 
-# Display Chat Messages from History 
-for message in st.session_state.messages:
-    with st.chat_message(message["role"]):
-        st.markdown(message["content"])
+# Select the llm 
+# llm = Ollama(model="mistral:latest")
 
+# streamlit picker for choice of LLM model
+llm_picker = st.sidebar.selectbox("Choose an LLM model", [ "Mistral", "llama2"])
 
-# check if there is a prompt and it is not none
-if prompt := st.chat_input("How can I help?"):
-    print(f"this is the prompt: {prompt}")
-    #Display user message in chat message container
-    with st.chat_message("user"):
-        st.markdown(prompt)
-    #Add user message to chat history
-    st.session_state.messages.append({"role": "user", "content": prompt})
+if llm_picker == "llama2":
+    llm = Ollama(model="llama2:latest")
+else:
+    llm = Ollama(model="mistral:latest")
 
 
-    with st.chat_message("assistant"):
-        message_placeholder = st.empty()
-        full_response = ""
 
-        # format the prompt into a human message so it can be read by ollama 
-        ollama_prompt = [
-            HumanMessage(content=prompt)
-        ]
-        message = chat_model(ollama_prompt)
-        full_response = message.content
-        # st. write the data type of message 
-        # st.write(type(message))
+# Set up the LLMChain, passing in memory
+template = """You are an AI chatbot having a conversation with a human.
+{history}
+Human: {human_input}
+AI: """
+prompt = PromptTemplate(input_variables=["history", "human_input"], template=template)
+llm_chain = LLMChain(llm=llm, prompt=prompt, memory=memory)
 
-        st.markdown(full_response)
-    # Add assistant response to chat history 
-    st.session_state.messages.append({"role": "assistant", "content": full_response})
+# Render current messages from StreamlitChatMessageHistory
+for msg in msgs.messages:
+    st.chat_message(msg.type).write(msg.content)
 
-# TODO add memory to the chatbot so it can remember the previous line!
+# If user inputs a new prompt, generate and draw a new response
+if prompt := st.chat_input():
+    st.chat_message("human").write(prompt)
+    # Note: new messages are saved to history automatically by Langchain during run
+    response = llm_chain.run(prompt)
+    st.chat_message("ai").write(response)
 
+# Draw the messages at the end, so newly generated ones show up immediately
+with view_messages:
+    """
+    Memory initialized with:
+    ```python
+    msgs = StreamlitChatMessageHistory(key="langchain_messages")
+    memory = ConversationBufferMemory(chat_memory=msgs)
+    ```
+
+    Contents of `st.session_state.langchain_messages`:
+    """
+    llm
+    view_messages.json(st.session_state.langchain_messages)
