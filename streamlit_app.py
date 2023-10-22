@@ -1,9 +1,10 @@
 # Code refactored from https://docs.streamlit.io/knowledge-base/tutorials/build-conversational-apps
 
-from langchain.llms import Ollama
+from langchain.chat_models import ChatOllama
+from langchain.schema import HumanMessage
 
-llm =  Ollama(model="mistral:latest")
 
+chat_model =  ChatOllama(model="mistral:latest")
 
 import streamlit as st
 
@@ -27,6 +28,7 @@ for message in st.session_state.messages:
 
 # check if there is a prompt and it is not none
 if prompt := st.chat_input("How can I help?"):
+    print(f"this is the prompt: {prompt}")
     #Display user message in chat message container
     with st.chat_message("user"):
         st.markdown(prompt)
@@ -34,13 +36,22 @@ if prompt := st.chat_input("How can I help?"):
     st.session_state.messages.append({"role": "user", "content": prompt})
 
 
-
-    response = llm(prompt)
-
-    # Display assistant response in chat message container
     with st.chat_message("assistant"):
-        st.markdown(response)
-    # Add assistant response to chat history 
-    st.session_state.messages.append({"role": "assistant", "content": response})
+        message_placeholder = st.empty()
+        full_response = ""
 
+        # format the prompt into a human message so it can be read by ollama 
+        ollama_prompt = [
+            HumanMessage(content=prompt)
+        ]
+        message = chat_model(ollama_prompt)
+        full_response = message.content
+        # st. write the data type of message 
+        # st.write(type(message))
+
+        st.markdown(full_response)
+    # Add assistant response to chat history 
+    st.session_state.messages.append({"role": "assistant", "content": full_response})
+
+# TODO add memory to the chatbot so it can remember the previous line!
 
