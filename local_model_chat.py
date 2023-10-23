@@ -5,8 +5,11 @@ from langchain.memory.chat_message_histories import StreamlitChatMessageHistory
 from langchain.prompts import PromptTemplate
 import streamlit as st
 
-st.set_page_config(page_title="Mistral Chat", page_icon="📖")
-st.title("📖 Mistral Chat")
+st.set_page_config(page_title="Local Model Chat", page_icon="📖")
+
+# streamlit picker for choice of LLM model
+llm_picker = st.sidebar.selectbox("Choose an LLM model", [ "Mistral", "llama2"])
+st.title(f"📖 {llm_picker} Chat")
 
 # Set up memory
 msgs = StreamlitChatMessageHistory(key="langchain_messages")
@@ -19,22 +22,22 @@ view_messages = st.expander("View the message contents in session state")
 # Select the llm 
 # llm = Ollama(model="mistral:latest")
 
-# streamlit picker for choice of LLM model
-llm_picker = st.sidebar.selectbox("Choose an LLM model", [ "Mistral", "llama2"])
-
 if llm_picker == "llama2":
     llm = Ollama(model="llama2:latest")
 else:
     llm = Ollama(model="mistral:latest")
 
-
+template_text = st.sidebar.text_area("Template", value="You are an AI chatbot having a conversation with a human.", height=500)
 
 # Set up the LLMChain, passing in memory
-template = """You are an AI chatbot having a conversation with a human.
+template = """
 {history}
 Human: {human_input}
 AI: """
-prompt = PromptTemplate(input_variables=["history", "human_input"], template=template)
+prompt = PromptTemplate(input_variables=["history", "human_input"], template=template_text + template)
+
+print(f"History: prompt={prompt}, memory={memory}")
+
 llm_chain = LLMChain(llm=llm, prompt=prompt, memory=memory)
 
 # Render current messages from StreamlitChatMessageHistory
@@ -59,5 +62,5 @@ with view_messages:
 
     Contents of `st.session_state.langchain_messages`:
     """
-    llm
+    st.write(msgs.messages)
     view_messages.json(st.session_state.langchain_messages)
