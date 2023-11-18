@@ -1,5 +1,7 @@
 # Local Model Chat
 
+A conversational chatbot built in Python using Streamlit and the Mistral LLM model.
+
 ![Local Model Chat Cover Image](/images/cover.png)
 
 This is a simple chat application built using the Langchain library in Python. It allows users to interact with an AI chatbot through a user interface. The chatbot responds to prompts from the user and can generate new responses based on the user's input.
@@ -43,3 +45,7 @@ The chat application uses the Langchain library to create an AI chatbot that can
 ## Machine Learning Model
 
 The chatbot uses an LLM model to generate responses based on the user's input. The `local_model_chat.py` file includes a picker for choosing an LLM model, with two options available: "Mistral" and "llama2". If the user selects "llama2", the chatbot uses the Ollama model with a specific model name and version. Otherwise, it uses the Mistral model with its default settings. The LLM model is integrated into the chatbot through the Langchain library, which provides a simple interface for interacting with the model and generating responses based on user input.
+
+## Special Thanks
+
+Special thanks to the dataprofessor, who inspired this idea, and whose repository this was forked from. 
