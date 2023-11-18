@@ -3,6 +3,7 @@
 ![Local Model Chat Cover Image](/images/cover.png)
 
 This is a simple chat application built using the Langchain library in Python. It allows users to interact with an AI chatbot through a user interface. The chatbot responds to prompts from the user and can generate new responses based on the user's input.
+This application is configured to use a local model as the LLM, and this code can be modified to use alternative models, including OpenAI or other open source models.
 
 ## Prerequisites
 
